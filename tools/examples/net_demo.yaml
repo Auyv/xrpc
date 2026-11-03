@@ -1,0 +1,37 @@
+# 两节点例子：gateway 调用 mcu 的 Add，mcu 向 gateway 上报 Alarm。
+# 仿真：python tools/xrpc_net_gen.py sim tools/examples/net_demo.yaml --out out/net_demo
+# 格式见 tools/README.md 第 3 节
+module: guide
+crc16: ccitt_false
+
+nodes:
+  - {name: mcu, id: 0x0B}
+  - {name: gateway, id: 0x0A}
+
+links:
+  - name: uart
+    connect:
+      mcu: {name: to_gateway}
+      gateway: {name: to_mcu}
+
+processes:
+  - name: Add
+    id: 0x00001001
+    provider: mcu
+    callers: [gateway]
+    input:
+      - {id: 1, name: a, type: i32}
+      - {id: 2, name: b, type: i32}
+    output:
+      - {id: 1, name: sum, type: i32}
+
+notifies:
+  - name: Alarm
+    id: 0x00002001
+    publisher: mcu
+    subscribers: [gateway]
+    need_ack: true
+    timeout_ms: 300
+    retry: 2
+    params:
+      - {id: 1, name: code, type: u32}

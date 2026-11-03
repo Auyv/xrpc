@@ -1,0 +1,72 @@
+# 接口定义示例。两端用同一份文件，分别按节点生成。
+#
+#   python tools/xrpc_api_gen.py tools/examples/api_demo.yaml --list
+#   python tools/xrpc_api_gen.py tools/examples/api_demo.yaml --node mcu --out gen/mcu
+
+module: demo
+
+processes:
+  - name: Add
+    id: 0x00001001
+    brief: 两数相加
+    timeout_ms: 1000
+    input:
+      - {id: 1, name: a, type: i32}
+      - {id: 2, name: b, type: i32}
+    output:
+      - {id: 1, name: sum, type: i32}
+
+  - name: GetVersion
+    id: 0x00001002
+    output:
+      - {id: 1, name: major, type: u8}
+      - {id: 2, name: text, type: string, max_len: 32}
+
+  - name: Reboot
+    id: 0x00001003
+    # 与已有设备互通时，在这里写现有的 key，不用工具计算
+    key: 0x12345678
+    input:
+      - {id: 1, name: delay_ms, type: u32}
+
+notifies:
+  - name: VehicleData
+    id: 0x00002001
+    need_ack: true
+    timeout_ms: 500
+    retry: 2
+    params:
+      - {id: 1, name: speed, type: u16}
+      - {id: 2, name: blob, type: bytes, max_len: 128}
+
+  - name: Alarm
+    id: 0x00002002
+    params:
+      - {id: 1, name: code, type: u32}
+
+  - name: Heartbeat
+    id: 0x00002003
+
+nodes:
+  - name: mcu
+    provides: [Add, GetVersion, Reboot]
+    publishes:
+      - notify: VehicleData
+        links: [0]              # 发布到哪些链路，序号按 links 配置顺序
+        ack_nodes: [0x0000000A] # 必须应答的节点
+      - notify: Heartbeat
+        links: [0]
+    subscribes:
+      - {notify: Alarm, publisher: 0x0000000A}
+
+  - name: gateway
+    # calls 不写时，本节点不提供的过程都当作远端过程
+    publishes:
+      - notify: Alarm
+        links: [0]
+    subscribes:
+      - notify: VehicleData
+        publisher: 0x0000000B
+      - notify: Heartbeat
+        publisher: 0            # 0 表示任意发布方
+        send_ack: false         # 观察者，不应答

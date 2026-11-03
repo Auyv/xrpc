@@ -1,0 +1,19 @@
+# 适配配置示例：RTOS 或裸机，一条串口。
+#
+#   python tools/xrpc_port_gen.py generate tools/examples/port_custom.yaml --out my_port
+#   python tools/xrpc_port_gen.py check my_port
+
+node_id: 0x0000000B
+protocol_version: 0x0200
+platform: custom        # win32 | posix | custom
+threads: multi          # multi | single
+crc16: custom           # custom | ccitt_false | fixed
+call_slots: 4           # 0 表示不启用调用槽，也就不能用异步调用
+frame_size: 2600        # 决定最大帧长
+recv_size: 1024
+
+links:
+  - name: uart0
+    type: custom        # custom | win_pipe
+    topology: p2p       # p2p | bus
+    peer_node_id: 0     # 0 表示靠握手学习对端 ID

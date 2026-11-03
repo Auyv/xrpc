@@ -1,0 +1,23 @@
+# 构建产物
+build/
+out/
+cmake-build-*/
+*.o
+*.obj
+*.a
+*.lib
+*.elf
+*.map
+
+# 编辑器与系统
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# 本地临时
+ai_tmp/
+*.log
+
+# Python
+__pycache__/
